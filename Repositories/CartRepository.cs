@@ -14,14 +14,21 @@ namespace Shopping_Cart.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<CartItem>> GetCartAsync()
+        public async Task<IEnumerable<CartItem>> GetCartAsync(int userId)
         {
-            return await _context.CartItems.Include(c => c.Product).ToListAsync();
+            return await _context.CartItems
+                .Where(c => c.userId == userId)
+                .Include(c => c.Product)
+                .Include(c => c.User)
+                .ToListAsync();
         }
 
         public async Task AddToCartAsync(CartItem item)
         {
-            var existing = await _context.CartItems.FirstOrDefaultAsync(c => c.ProductId == item.ProductId);
+            var existing = await _context.CartItems
+                    .FirstOrDefaultAsync(c => c.ProductId == item.ProductId && c.userId == item.userId);
+
+
             if (existing != null)
             {
                 existing.Quantity += item.Quantity;
@@ -34,9 +41,11 @@ namespace Shopping_Cart.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateQuantityAsync(int productId, int delta)
+        public async Task UpdateQuantityAsync(int userId, int productId, int delta)
         {
-            var item = await _context.CartItems.FirstOrDefaultAsync(c => c.ProductId == productId);
+            var item = await _context.CartItems
+                .FirstOrDefaultAsync(c => c.ProductId == productId && c.userId == userId);
+
             if (item != null)
             {
                 item.Quantity += delta;
@@ -48,16 +57,21 @@ namespace Shopping_Cart.Repositories
             }
         }
 
-        public async Task RemoveFromCartAsync(int productId)
+        public async Task RemoveFromCartAsync(int userId, int productId)
         {
-            var allItems = await _context.CartItems.ToListAsync();
-            _context.CartItems.RemoveRange(allItems);
-            await _context.SaveChangesAsync();
+            var item = await _context.CartItems
+                .FirstOrDefaultAsync(c => c.ProductId == productId && c.userId == userId);
+
+            if (item != null)
+            {
+                _context.CartItems.Remove(item);
+                await _context.SaveChangesAsync();
+            }
         }
 
-        public async Task ClearCartAsync()
+        public async Task ClearCartAsync(int userId)
         {
-            var items = await _context.CartItems.ToListAsync();
+            var items = _context.CartItems.Where(c => c.userId == userId);
             _context.CartItems.RemoveRange(items);
             await _context.SaveChangesAsync();
         }

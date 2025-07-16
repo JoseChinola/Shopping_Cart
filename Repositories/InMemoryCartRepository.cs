@@ -7,23 +7,35 @@ namespace Shopping_Cart.Repositories
     {
         private static readonly List<CartItem> _cart = new();
 
-        public Task<IEnumerable<CartItem>> GetCartAsync() => Task.FromResult(_cart.AsEnumerable());
+        public Task<IEnumerable<CartItem>> GetCartAsync(int userId)
+        {
+           var userCart = _cart.Where(c => c.userId == userId).AsEnumerable();
+            return Task.FromResult(userCart);
+        }
 
         public Task AddToCartAsync(CartItem item)
         {
-            var existing = _cart.FirstOrDefault(c => c.ProductId == item.ProductId);
+            var existing = _cart.FirstOrDefault(c =>
+                c.userId == item.userId && c.ProductId == item.ProductId);
+
             if (existing != null)
+            {
                 existing.Quantity += item.Quantity;
+            }
             else
+            {
                 _cart.Add(item);
+            }
 
             return Task.CompletedTask;
         }
 
 
-        public Task UpdateQuantityAsync(int productId, int delta)
+        public Task UpdateQuantityAsync(int userId, int productId, int delta)
         {
-            var item = _cart.FirstOrDefault(c => c.ProductId == productId);
+            var item = _cart.FirstOrDefault(c =>
+                c.userId == userId && c.ProductId == productId);
+
             if (item != null)
             {
                 item.Quantity += delta;
@@ -32,18 +44,19 @@ namespace Shopping_Cart.Repositories
                     _cart.Remove(item);
                 }
             }
+
             return Task.CompletedTask;
         }
 
-        public Task RemoveFromCartAsync(int productId)
+        public Task RemoveFromCartAsync(int userId, int productId)
         {
-            _cart.RemoveAll(c => c.ProductId == productId);
+            _cart.RemoveAll(c => c.userId == userId && c.ProductId == productId);
             return Task.CompletedTask;
         }
 
-        public Task ClearCartAsync()
+        public Task ClearCartAsync(int userId)
         {
-            _cart.Clear();
+            _cart.RemoveAll(c => c.userId == userId);
             return Task.CompletedTask;
         }
     }
