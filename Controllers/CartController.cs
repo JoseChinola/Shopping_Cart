@@ -24,11 +24,7 @@ namespace Shopping_Cart.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCart([FromQuery] int userId)
         {
-            var items = await _cartRepository.GetCartAsync(userId);
-
-            
-
-           
+            var items = await _cartRepository.GetCartAsync(userId);                 
 
             if (!items.Any())
             {
@@ -78,14 +74,14 @@ namespace Shopping_Cart.Controllers
             // Validate the input
             if (item == null || item.ProductId <= 0 || item.Quantity <= 0)
             {
-                return BadRequest("Invalid cart item data.");
+                return BadRequest(new { message = "Invalid cart item data." });
             }
 
             // Check if the product exists
             var product = await _productRepository.GetByIdAsync(item.ProductId);
             if (product == null)
             {
-                return NotFound($"Product with ID {item.ProductId} not found.");
+                return NotFound(new {message = $"Product with ID {item.ProductId} not found." });
             }
 
             // Check if the product is available in sufficient quantity
@@ -97,7 +93,13 @@ namespace Shopping_Cart.Controllers
                 userId = item.UserId
             });
 
-            return Ok("Item added to cart successfully.");
+
+            return Ok(new
+            {
+                message = "Item added to cart successfully.",
+                success = true
+
+            });           
         }
 
         [HttpPut("quantity")]
@@ -107,26 +109,32 @@ namespace Shopping_Cart.Controllers
             // Validate the input
             if (dto == null || dto.ProductId <= 0 || dto.Delta == 0)
             {
-                return BadRequest("Invalid update quantity data.");
+                return BadRequest(new { message = "Invalid update quantity data." });
             }
 
         
             var product = await _productRepository.GetByIdAsync(dto.ProductId);
             if (product == null)
             {
-                return NotFound($"Product with ID {dto.ProductId} not found.");
+                return NotFound(new { message = $"Product with ID {dto.ProductId} not found." });
             }
 
             // Validate the quantity update
             var cartItems = await _cartRepository.GetCartAsync(dto.UserId);
             if (!cartItems.Any(c => c.ProductId == dto.ProductId))
             {
-                return NotFound($"Item with Product ID {dto.ProductId} not found in cart.");
+                return NotFound(new {message =$"Item with Product ID {dto.ProductId} not found in cart."});
             }
 
             await _cartRepository.UpdateQuantityAsync(dto.UserId, dto.ProductId, dto.Delta);
 
-            return Ok("Item quantity updated successfully.");
+            return Ok(new
+            {
+                message = "Item quantity updated successfully.",
+                success = true
+
+            });
+       
         }
 
         [HttpDelete("{userId}/{productId}")]
@@ -136,13 +144,18 @@ namespace Shopping_Cart.Controllers
             var cartItems = await _cartRepository.GetCartAsync(userId);
             if (!cartItems.Any(c => c.ProductId == productId))
             {
-                return NotFound($"Item with Product ID {productId} not found in cart.");
+                return NotFound(new { message = $"Item with Product ID {productId} not found in cart." });
             }
 
             // Check if the product exists
             await _cartRepository.RemoveFromCartAsync(userId, productId);
 
-            return Ok("Item removed from cart successfully.");
+            return Ok(new
+            {
+               message = "Item removed from cart successfully.",
+               success = true
+                               
+            });
         }
 
         [HttpPost("checkout")]
@@ -152,11 +165,11 @@ namespace Shopping_Cart.Controllers
             var cartItems = await _cartRepository.GetCartAsync(userId);
             if (!cartItems.Any())
             {
-                return BadRequest("Cart is empty.");
+                return BadRequest(new { message = "Cart is empty.", success = false, error = true });
             }
-            
+
             await _cartRepository.ClearCartAsync(userId);
-            return Ok("Checkout successful. Your order has been placed.");
+            return Ok(new { message = "Payment successful", success = true, error = false });
         }
     }
 }

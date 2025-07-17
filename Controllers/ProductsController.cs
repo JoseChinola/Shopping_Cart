@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Shopping_Cart.DTOs;
 using Shopping_Cart.Interfaces;
 
 namespace Shopping_Cart.Controllers
@@ -20,6 +21,28 @@ namespace Shopping_Cart.Controllers
         {
             var products = await _repository.GetAllAsync();
             return Ok(products);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetByIdProducts(int id)
+        {
+            var product = await _repository.GetByIdAsync(id);
+            if (product == null)
+            {
+                return NotFound(new { message = "Product not found" });
+            }
+
+            var productDto = new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                ImageUrl = product.ImageUrl
+            };
+
+
+            return Ok(productDto);
         }
     }
 }
