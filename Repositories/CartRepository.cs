@@ -18,8 +18,7 @@ namespace Shopping_Cart.Repositories
         {
             return await _context.CartItems
                 .Where(c => c.userId == userId)
-                .Include(c => c.Product)
-                .Include(c => c.User)
+                .Include(c => c.Product)               
                 .ToListAsync();
         }
 

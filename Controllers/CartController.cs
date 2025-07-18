@@ -46,13 +46,8 @@ namespace Shopping_Cart.Controllers
                     i.Product?.Name,
                     i.Product?.Price,
                     i.Product?.ImageUrl
-                },
-                User = new
-                {
-                    i.User.Id,
-                    i.User.Name,
-                    i.User.Username
                 }
+                
             });
 
 
